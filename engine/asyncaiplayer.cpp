@@ -3,7 +3,7 @@
 using namespace std;
 
 AsyncAiPlayer::AsyncAiPlayer(int color, int search_depth)
-    : AsyncPlayer(color) {}
+    : AsyncPlayer(color), m_ai_player(color, search_depth) {}
 
 void AsyncAiPlayer::asyncPrepare(const ChessBoard &board, ReadyHandler handler)
 {
