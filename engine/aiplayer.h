@@ -2,7 +2,7 @@
 #define AI_PLAYER_H_INCLUDED
 
 #include "chessplayer.h"
-#include <global.h>
+#include "global.h"
 #include <list>
 
 

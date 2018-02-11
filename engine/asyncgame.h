@@ -22,4 +22,7 @@ private:
   std::shared_ptr<io_service> m_io_ptr;
   TAsyncPlayerPtr m_player1;
   TAsyncPlayerPtr m_player2;
+  AsyncPlayer::EndStatus m_end_status;
+
+  void do_move(ChessBoard &board);
 };
