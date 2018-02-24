@@ -1,55 +1,67 @@
 #include "asyncgame.h"
 
-#include "chessboard.h"
+namespace ph = std::placeholders;
 
-AsyncGame::AsyncGame(std::shared_ptr<io_service> io_ptr,
+AsyncGame::AsyncGame(const std::shared_ptr<io_service> &io_ptr,
                      TAsyncPlayerPtr p1,
                      TAsyncPlayerPtr p2)
     : m_io_ptr(io_ptr),
       m_player1(p1),
       m_player2(p2),
-      m_end_status(AsyncPlayer::EndStatus::NONE)
+      m_board()
 {
+  m_board.initDefaultSetup();
+
+  m_strand_ptr = std::make_shared<io_service::strand>(*m_io_ptr);
+
+  m_player1->setStrand(m_strand_ptr);
+  m_player2->setStrand(m_strand_ptr);
+
+  m_player1->setService(m_io_ptr);
+  m_player2->setService(m_io_ptr);
 }
 
-void AsyncGame::start(std::function<void(AsyncPlayer::EndStatus end_status)> end_game_handler)
+void AsyncGame::start(EndGameHandler end_game_handler)
 {
-  ChessBoard board;
-  board.initDefaultSetup();
+  m_end_game_handler_ptr = std::make_shared<EndGameHandler>(end_game_handler);
+  m_player1->asyncPrepare(m_board, [] { /* PREPARED */ });
+  m_player2->asyncPrepare(m_board, [] { /* PREPARED */ });
 
-  std::shared_ptr<io_service::strand> strand_ptr = std::make_shared<io_service::strand>(*m_io_ptr);
-  m_player1->setStrand(strand_ptr);
-  m_player2->setStrand(strand_ptr);
-
-  m_player1->asyncPrepare(board, [] { /* PREPARED */ });
-  m_player2->asyncPrepare(board, [] { /* PREPARED */ });
-  do_move(board);
-  end_game_handler(m_end_status);
+  m_player1->asyncGetNext(m_board, std::bind(&AsyncGame::get_next_handler, this, ph::_1));
 }
 
-void AsyncGame::do_move(ChessBoard &board)
+void AsyncGame::get_next_handler(const Move &move)
 {
-  m_player1->asyncGetNext(board, [this, &board](const Move &move) {
-    board.move(move);
-    board.print(move);
-    m_player2->asyncShowMove(board, move, [this, &board] {
-      auto status = board.getPlayerStatus(m_player2->getColor());
-      if (status == ChessPlayer::Normal || status == ChessPlayer::InCheck)
-      {
-        std::swap(m_player1, m_player2);
-        do_move(board);
-      }
-      switch (status)
-      {
-      case ChessPlayer::Checkmate:
-        m_end_status = board.next_move_color == WHITE ? AsyncPlayer::EndStatus::WHITE_LOOSE : AsyncPlayer::EndStatus::WHITE_WIN;
-        break;
-      case ChessPlayer::Draw:
-        m_end_status = AsyncPlayer::EndStatus::DRAW;
-        break;
-      default:
-        break;
-      }
-    });
-  });
+  m_board.move(move);
+  m_board.print(move);
+  m_player2->asyncShowMove(m_board, move, std::bind(&AsyncGame::show_move_handler, this));
+}
+
+void AsyncGame::show_move_handler()
+{
+  auto status = m_board.getPlayerStatus(m_player2->getColor());
+  if (status == ChessPlayer::Normal || status == ChessPlayer::InCheck)
+  {
+    std::swap(m_player1, m_player2);
+    m_player1->asyncGetNext(m_board, std::bind(&AsyncGame::get_next_handler, this, ph::_1));
+  }
+  else
+  {
+    AsyncPlayer::EndStatus end_status;
+    switch (status)
+    {
+    case ChessPlayer::Checkmate:
+      if (m_board.next_move_color == WHITE)
+        end_status = AsyncPlayer::WHITE_LOOSE;
+      else
+        end_status = AsyncPlayer::EndStatus::WHITE_WIN;
+      break;
+    case ChessPlayer::Draw:
+      end_status = AsyncPlayer::EndStatus::DRAW;
+      break;
+    default:
+      break;
+    }
+    m_end_game_handler_ptr->operator()(end_status);
+  }
 }

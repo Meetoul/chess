@@ -2,6 +2,7 @@
 
 #include "asyncplayer.h"
 #include "aiplayer.h"
+#include "chessboard.h"
 
 class AsyncAiPlayer : public AsyncPlayer
 {

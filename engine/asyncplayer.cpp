@@ -23,10 +23,15 @@ void AsyncPlayer::setColor(int value)
 
 std::shared_ptr<boost::asio::io_service::strand> AsyncPlayer::getStrand() const
 {
-    return strand;
+    return m_strand_ptr;
 }
 
 void AsyncPlayer::setStrand(const std::shared_ptr<boost::asio::io_service::strand> &value)
 {
-    strand = value;
+    m_strand_ptr = value;
+}
+
+void AsyncPlayer::setService(const std::shared_ptr<boost::asio::io_service> &io_serv)
+{
+    m_io_service = io_serv;
 }

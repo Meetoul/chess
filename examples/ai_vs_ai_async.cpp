@@ -9,7 +9,8 @@ int main()
     auto io_ptr = std::make_shared<io_service>();
     thread threads[5];
 
-    shared_ptr<AsyncAiPlayer> players[2] = {make_shared<AsyncAiPlayer>(WHITE, 1), make_shared<AsyncAiPlayer>(BLACK, 1)};
+    shared_ptr<AsyncAiPlayer> players[2] = {make_shared<AsyncAiPlayer>(WHITE, 1),
+                                            make_shared<AsyncAiPlayer>(BLACK, 1)};
     AsyncGame game(io_ptr, players[0], players[1]);
     game.start([io_ptr](AsyncPlayer::EndStatus end_status) {
         switch (end_status)
