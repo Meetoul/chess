@@ -15,20 +15,19 @@ typedef std::function<void(AsyncPlayer::EndStatus end_status)> EndGameHandler;
 class AsyncGame
 {
 public:
-  AsyncGame(const std::shared_ptr<io_service> &io_ptr,
+  AsyncGame(std::shared_ptr<io_service> io_ptr,
             TAsyncPlayerPtr p1,
             TAsyncPlayerPtr p2);
 
   void start(EndGameHandler end_game_handler);
 
 private:
-  std::shared_ptr<io_service> m_io_ptr;
   std::shared_ptr<io_service::strand> m_strand_ptr;
 
   TAsyncPlayerPtr m_player1;
   TAsyncPlayerPtr m_player2;
 
-  std::shared_ptr<EndGameHandler> m_end_game_handler_ptr;
+  EndGameHandler m_end_game_handler;
 
   ChessBoard m_board;
 

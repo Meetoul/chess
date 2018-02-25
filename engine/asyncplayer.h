@@ -36,12 +36,9 @@ public:
 
   std::shared_ptr<boost::asio::io_service::strand> getStrand() const;
   void setStrand(const std::shared_ptr<boost::asio::io_service::strand> &value);
-
-  void setService(const std::shared_ptr<boost::asio::io_service> &io_serv);
-
+  
 protected:
   int color;
   std::shared_ptr<boost::asio::io_service::strand> m_strand_ptr;
-  std::shared_ptr<boost::asio::io_service> m_io_service;
 };
 typedef std::shared_ptr<AsyncPlayer> TAsyncPlayerPtr;

@@ -30,8 +30,3 @@ void AsyncPlayer::setStrand(const std::shared_ptr<boost::asio::io_service::stran
 {
     m_strand_ptr = value;
 }
-
-void AsyncPlayer::setService(const std::shared_ptr<boost::asio::io_service> &io_serv)
-{
-    m_io_service = io_serv;
-}

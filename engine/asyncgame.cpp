@@ -2,28 +2,24 @@
 
 namespace ph = std::placeholders;
 
-AsyncGame::AsyncGame(const std::shared_ptr<io_service> &io_ptr,
+AsyncGame::AsyncGame(std::shared_ptr<io_service> io_ptr,
                      TAsyncPlayerPtr p1,
                      TAsyncPlayerPtr p2)
-    : m_io_ptr(io_ptr),
-      m_player1(p1),
+    : m_player1(p1),
       m_player2(p2),
-      m_board()
+      m_board(),
+      m_strand_ptr(std::make_shared<io_service::strand>(*io_ptr))
 {
   m_board.initDefaultSetup();
 
-  m_strand_ptr = std::make_shared<io_service::strand>(*m_io_ptr);
-
   m_player1->setStrand(m_strand_ptr);
   m_player2->setStrand(m_strand_ptr);
-
-  m_player1->setService(m_io_ptr);
-  m_player2->setService(m_io_ptr);
 }
 
 void AsyncGame::start(EndGameHandler end_game_handler)
 {
-  m_end_game_handler_ptr = std::make_shared<EndGameHandler>(end_game_handler);
+  m_end_game_handler = end_game_handler;
+
   m_player1->asyncPrepare(m_board, [] { /* PREPARED */ });
   m_player2->asyncPrepare(m_board, [] { /* PREPARED */ });
 
@@ -62,6 +58,6 @@ void AsyncGame::show_move_handler()
     default:
       break;
     }
-    m_end_game_handler_ptr->operator()(end_status);
+    m_strand_ptr->post(std::bind(m_end_game_handler, end_status));
   }
 }
